@@ -27,6 +27,9 @@
 #include "..\common\TrayIconImpl.h"
 #include <memory>
 
+#define FEEDBACK_TIMER 10
+#define FEEDBACK_TIMEOUT 250
+
 
 class CMainDlg : public CDialogImpl< CMainDlg >, public CUpdateUI< CMainDlg >,
 		public CMessageFilter, public CIdleHandler, public CTrayIconImpl< CMainDlg >
@@ -34,7 +37,7 @@ class CMainDlg : public CDialogImpl< CMainDlg >, public CUpdateUI< CMainDlg >,
 public:
 
    CMainDlg() : receiver_( SERVER_LISTEN_IP, SERVER_LISTEN_PORT ),
-      sender_( CLIENT_LISTEN_IP, CLIENT_LISTEN_PORT ) {}
+      sender_( CLIENT_LISTEN_IP, CLIENT_LISTEN_PORT ), suppressFeedback_( false ) {}
 
 	enum { IDD = IDD_MAINDLG };
 
@@ -57,6 +60,7 @@ public:
       MESSAGE_HANDLER( WM_WINDOWPOSCHANGING, OnWindowPosChanging )
       MESSAGE_HANDLER( MulticastReceiver::RWM_RECEIVED, OnMessageReceived )
       MESSAGE_HANDLER( MM_MIXM_CONTROL_CHANGE, OnMixmControlChange )
+      MESSAGE_HANDLER( WM_TIMER, OnTimer )
 		COMMAND_ID_HANDLER( IDCANCEL, OnCancel )
       CHAIN_MSG_MAP( CTrayIconImpl< CMainDlg > )
 	END_MSG_MAP()
@@ -72,6 +76,8 @@ private:
    MulticastSender sender_;
 
    Mixer mixer_;
+
+   bool suppressFeedback_;
 
 
 	LRESULT OnInitDialog( UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/ )
@@ -176,6 +182,11 @@ private:
                mapped |= ( (int)(pMsg->GetPayload()[i]) & 0xff ) << ( ( ( payloadSize - i ) - 1 ) * 8 );
             }
 
+            // This fixes the slider bouncing around on the client side
+            //
+            suppressFeedback_ = true;
+            SetTimer( FEEDBACK_TIMER, FEEDBACK_TIMEOUT );
+
             mixer_.SetMasterVolume( mapped );
          }
 
@@ -231,18 +242,21 @@ private:
 
    void SendVolumeToClient()
    {
-      DWORD volume = 0;
-      mixer_.GetMasterVolume( volume );
+      if ( !suppressFeedback_ )
+      {
+         DWORD volume = 0;
+         mixer_.GetMasterVolume( volume );
 
-      char buffer[4];
-      buffer[0] = static_cast< char >( volume >> 24 & 0xff );
-      buffer[1] = static_cast< char >( volume >> 16 & 0xff );
-      buffer[2] = static_cast< char >( volume >> 8 & 0xff );
-      buffer[3] = static_cast< char >( volume & 0xff );
+         char buffer[4];
+         buffer[0] = static_cast< char >( volume >> 24 & 0xff );
+         buffer[1] = static_cast< char >( volume >> 16 & 0xff );
+         buffer[2] = static_cast< char >( volume >> 8 & 0xff );
+         buffer[3] = static_cast< char >( volume & 0xff );
 
-      Message msg( Message::Volume, 4, buffer );
+         Message msg( Message::Volume, 4, buffer );
 
-      sender_.Send( msg );
+         sender_.Send( msg );
+      }
    }
 
 
@@ -264,5 +278,18 @@ private:
    {
       Message msg( Message::ServerShutdown );
       sender_.Send( msg );
+   }
+
+
+   LRESULT OnTimer( UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/ )
+   {
+      if ( wParam == FEEDBACK_TIMER )
+      {
+         KillTimer( FEEDBACK_TIMER );
+         suppressFeedback_ = false;
+         SendVolumeToClient();
+      }
+
+      return 0;
    }
 };
