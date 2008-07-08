@@ -40,6 +40,7 @@
 
 
 const UINT RWM_SINGLEINSTANCE = RegisterWindowMessage( _T("RWM_SINGLE_INSTANCE__2FDEE7D4_83E3_4b68_BD0D_61F0901E9F6D") );
+const UINT RWM_TASKBARCREATED = RegisterWindowMessage( _T("TaskbarCreated") );
 
 
 class CMainDlg : public CDialogImpl< CMainDlg >, public CUpdateUI< CMainDlg >,
@@ -104,6 +105,7 @@ public:
       MESSAGE_HANDLER( MulticastReceiver::RWM_RECEIVED, OnMessageReceived )
       MESSAGE_HANDLER( WM_TIMER, OnTimer )
       MESSAGE_HANDLER( WM_VSCROLL, OnVScroll )
+      MESSAGE_HANDLER( RWM_TASKBARCREATED, OnTaskbarCreated )
 		COMMAND_ID_HANDLER( IDCANCEL, OnCancel )
       COMMAND_ID_HANDLER( ID_HIDE, OnHide )
       COMMAND_ID_HANDLER( ID_SHOW, OnShow )
@@ -461,5 +463,23 @@ private:
    {
       toolTip_ = _T("MixerClient");
       SetTooltipText( toolTip_ );
+   }
+
+
+   LRESULT OnTaskbarCreated( UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/ )
+   {
+      if ( !IsVisible() )
+      {
+         InstallIcon( toolTip_, smallIcon_, IDR_SYSTRAYMENU );
+      }
+
+      return 0;
+   }
+
+
+   BOOL IsVisible()
+   {
+      DWORD dwStyle = GetWindowLong( GWL_STYLE );
+      return ( ( dwStyle & WS_VISIBLE ) == WS_VISIBLE );
    }
 };
