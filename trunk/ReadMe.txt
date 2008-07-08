@@ -1,4 +1,4 @@
-LAN Remote Control (Revision 8) 2 July 2008
+LAN Remote Control (Revision 14) 8 July 2008
 
 http://lanremotecontrol.googlecode.com
 
