@@ -31,6 +31,9 @@
 #define FEEDBACK_TIMEOUT 250
 
 
+const UINT RWM_TASKBARCREATED = RegisterWindowMessage( _T("TaskbarCreated") );
+
+
 class CMainDlg : public CDialogImpl< CMainDlg >, public CUpdateUI< CMainDlg >,
 		public CMessageFilter, public CIdleHandler, public CTrayIconImpl< CMainDlg >
 {
@@ -61,6 +64,7 @@ public:
       MESSAGE_HANDLER( MulticastReceiver::RWM_RECEIVED, OnMessageReceived )
       MESSAGE_HANDLER( MM_MIXM_CONTROL_CHANGE, OnMixmControlChange )
       MESSAGE_HANDLER( WM_TIMER, OnTimer )
+      MESSAGE_HANDLER( RWM_TASKBARCREATED, OnTaskbarCreated )
 		COMMAND_ID_HANDLER( IDCANCEL, OnCancel )
       CHAIN_MSG_MAP( CTrayIconImpl< CMainDlg > )
 	END_MSG_MAP()
@@ -79,6 +83,8 @@ private:
 
    bool suppressFeedback_;
 
+   CIcon smallIcon_;
+
 
 	LRESULT OnInitDialog( UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/ )
 	{
@@ -93,6 +99,8 @@ private:
 		HICON hIconSmall = (HICON)::LoadImage( _Module.GetResourceInstance(), MAKEINTRESOURCE( IDR_MAINFRAME ), 
 			IMAGE_ICON, ::GetSystemMetrics( SM_CXSMICON ), ::GetSystemMetrics( SM_CYSMICON ), LR_DEFAULTCOLOR );
 		SetIcon( hIconSmall, FALSE );
+
+      smallIcon_.Attach( hIconSmall );
 
 		// register object for message filtering and idle updates
 		CMessageLoop* pLoop = _Module.GetMessageLoop();
@@ -111,7 +119,7 @@ private:
          receiver_.Listen( m_hWnd );
       }
 
-      InstallIcon( _T("MixerServer"), hIconSmall, IDR_SYSTRAYMENU );
+      InstallIcon( _T("MixerServer"), smallIcon_, IDR_SYSTRAYMENU );
 
 		return TRUE;
 	}
@@ -290,6 +298,13 @@ private:
          SendVolumeToClient();
       }
 
+      return 0;
+   }
+
+
+   LRESULT OnTaskbarCreated( UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/ )
+   {
+      InstallIcon( _T("MixerServer"), smallIcon_, IDR_SYSTRAYMENU );
       return 0;
    }
 };
