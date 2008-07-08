@@ -94,8 +94,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,8
- PRODUCTVERSION 1,0,0,8
+ FILEVERSION 1,0,0,14
+ PRODUCTVERSION 1,0,0,14
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -112,12 +112,12 @@ BEGIN
         BEGIN
             VALUE "Comments", "http://lanremotecontrol.googlecode.com"
             VALUE "FileDescription", "MixerServer Module"
-            VALUE "FileVersion", "1, 0, 0, 8"
+            VALUE "FileVersion", "1, 0, 0, 14"
             VALUE "InternalName", "MixerServer"
             VALUE "LegalCopyright", "Copyright (c) 2008 screamingtarget@gmail.com"
             VALUE "OriginalFilename", "MixerServer.exe"
             VALUE "ProductName", "MixerServer Module"
-            VALUE "ProductVersion", "1, 0, 0, 8"
+            VALUE "ProductVersion", "1, 0, 0, 14"
         END
     END
     BLOCK "VarFileInfo"
